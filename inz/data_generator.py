@@ -16,7 +16,7 @@ class DataGenerator:
 
     def gen_data(self):
         x = np.linspace(0, self.range, num=self.size)
-        y = 2 * x + np.random.normal(0, self.sigma, x.size)
+        y = 2 * x + np.random.normal(0, self.sigma, self.size)
         return list(zip(x, y))
 
     def save_data(self):

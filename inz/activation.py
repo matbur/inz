@@ -7,13 +7,13 @@ from typing import Iterable, List
 import numpy as np
 
 
-def identity(x: float, derivative=False) -> float:
+def identity(x, derivative=False):
     if derivative:
         return 1
     return x
 
 
-def binary_step(x: float, derivative=False) -> float:
+def binary_step(x, derivative=False):
     if derivative:
         if x == 0:
             raise ValueError('?')
@@ -22,32 +22,31 @@ def binary_step(x: float, derivative=False) -> float:
     return int(x >= 0)
 
 
-def logistic(x: float, derivative=False) -> float:
+def sigmoid(x, derivative=False):
     if derivative:
-        fx = logistic(x)
-        return fx * (1 - fx)
+        return np.exp(x) / (1 + np.exp(x)) ** 2
     return 1 / (1 + np.exp(-x))
 
 
-def tanh(x: float, derivative=False) -> float:
+def tanh(x, derivative=False):
     if derivative:
         return 1 - tanh(x) ** 2
     return np.tanh(x)
 
 
-def arctan(x: float, derivative=False) -> float:
+def arctan(x, derivative=False):
     if derivative:
         return 1 / (1 + x ** 2)
     return np.arctan(x)
 
 
-def soft_sign(x: float, derivative=False) -> float:
+def soft_sign(x, derivative=False):
     if derivative:
         return 1 / (1 + abs(x)) ** 2
     return x / (1 + abs(x))
 
 
-def relu(x: float, derivative=False) -> float:
+def relu(x, derivative=False):
     if derivative:
         return int(x >= 0)
     return max(0., x)

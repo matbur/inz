@@ -29,6 +29,14 @@ class DataGenerator:
         plt.show()
 
 
+def generate_data(n=100, cls=1, cx=0, cy=0, r=1) -> np.array:
+    x = np.random.normal(cx, r, n)
+    y = np.random.normal(cy, r, n)
+    c = [cls] * n
+
+    return np.array([x, y, c]).T
+
+
 if __name__ == '__main__':
     dg = DataGenerator(size=100, sigma=10)
     dg.save_data()

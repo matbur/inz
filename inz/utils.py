@@ -1,5 +1,7 @@
 from typing import Iterable
 
+import numpy as np
+
 
 def split(iterable: Iterable, width):
     """ Generator yields iterable in parts.
@@ -9,4 +11,7 @@ def split(iterable: Iterable, width):
     """
     it = iter(iterable)
     while True:
-        yield [next(it) for _ in range(width)]
+        rv = [next(it) for _ in range(width)]
+        if isinstance(iterable, np.ndarray):
+            rv = np.array(rv)
+        yield rv

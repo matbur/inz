@@ -21,13 +21,14 @@ class Perceptron:
         print(x[:4, :])
         xs = x.shape
 
+        errors = []
         for epoch in range(n_epoch):
             if epoch % 100 == 0:
                 self.plot(x, d)
 
             p = np.random.permutation(xlen)
             # p = np.arange(xlen)
-            errors = 0
+            epoch_error = 0
 
             for batch_x, batch_y in zip(split(x[p], batch_size), split(d[p], batch_size)):
                 w0 = self.w
@@ -37,47 +38,53 @@ class Perceptron:
 
                 y = self.predict(batch_x)
                 err = batch_y - y
-                errors += np.sum(np.abs(err))
+                epoch_error += np.sum(np.abs(err))
                 update = batch_x.T @ err
                 w = w0 + update
                 self.w = w
 
                 # r = np.sum(w0 - w)
 
-            print('errors:', errors)
+            print('epoch_error:', epoch_error)
+            errors.append(epoch_error)
 
-            if errors == 0:
-                self.plot(x, d)
+            if epoch_error == 0:
                 break
+
+        fig, ax = plt.subplots(1, 2)
+        ax[0].grid()
+        ax[0].plot(range(len(errors)), errors)
+        self.plot(x, d, ax[1])
+        plt.show()
 
     def predict(self, x):
         xw = x @ self.w
         return activation.binary_step(xw)
 
-    def plot(self, x, y):
-        plt.grid()
-        x1min = x[:, 1].min() - 1
-        x1max = x[:, 1].max() + 1
-        x2min = x[:, 2].min() - 1
-        x2max = x[:, 2].max() + 1
-        plt.axis([x1min, x1max, x2min, x2max])
+    def plot(self, x, y, ax=plt):
+        ax.grid()
+
+        _, x1min, x2min = x.min(0) - 1
+        _, x1max, x2max = x.max(0) + 1
+        ax.axis([x1min, x1max, x2min, x2max])
 
         # plot data
         c1 = x[y.astype(bool).T[0]]
         c2 = x[~y.astype(bool).T[0]]
 
-        plt.scatter(c1[:, 1], c1[:, 2], marker='^')
-        plt.scatter(c2[:, 1], c2[:, 2], marker='v')
+        ax.scatter(c1[:, 1], c1[:, 2], marker='^')
+        ax.scatter(c2[:, 1], c2[:, 2], marker='v')
 
         # plot weights
         bias, w1, w2 = self.w.T[0]
-        plt.quiver(0, 0, w1, w2, angles='xy', scale_units='xy', scale=1)
+        ax.quiver((x1max + x1min) / 2, (x2max + x2min) / 2, w1, w2, angles='xy', scale_units='xy', scale=1)
 
         def get_x2(x1):
             return (-w1 * x1 + bias) / w2
 
-        plt.plot([-100, 100], [get_x2(-100), get_x2(100)], c='k')
-        plt.show()
+        ax.plot([-100, 100], [get_x2(-100), get_x2(100)], c='k')
+        if ax is plt:
+            plt.show()
 
     def __str__(self):
         return f'Perceptron: {self.w}'
@@ -93,8 +100,8 @@ def main():
     x = data[:, :-1]
     y = data[:, -1].reshape(-1, 1)
 
-    x = np.array([[0, 0], [0, 1], [1, 1], [1, 0]])
-    y = np.array([0, 0, 1, 0]).reshape(-1, 1)
+    # x = np.array([[0, 0], [0, 1], [1, 1], [1, 0]])
+    # y = np.array([0, 0, 1, 0]).reshape(-1, 1)
 
     print(x.shape)
     print(y.shape)

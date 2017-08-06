@@ -19,7 +19,7 @@ def binary_step(x, derivative=False):
             raise ValueError('?')
         return 0
 
-    return int(x >= 0)
+    return x >= 0
 
 
 def sigmoid(x, derivative=False):

@@ -1,41 +1,34 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from inz import split
+from inz import activation, split
 from inz.data_generator import generate_data
 
-plt
-
 np.random.seed(42)
-
-
-def f(s):
-    return s >= 0
-
-
-c1 = generate_data(100, 1, 2, 2)
-c2 = generate_data(100, 0, -2, -2)
-
-data = np.array([*c1, *c2])
-np.random.shuffle(data)
-
-x = data[:, :-1]
-y = data[:, -1].reshape(-1, 1)
 
 
 class Perceptron:
     def __init__(self):
         np.random.seed(42)
-        # self.w = np.array([[1.], [-.8]])
-        self.w = np.random.rand(2, 1) - .5
+        self.w = np.random.rand(3, 1) - .5
+        # self.w = np.array([[0], [1.], [-.8]])
 
-    def fit(self, x, d, n_epoch=10, batch_size=64):
+    def fit(self, x, d, n_epoch=1001, batch_size=64):
         xlen = len(x)
         assert xlen == len(d), 'Features and labels must have the same length'
 
+        x = np.c_[[-1] * xlen, x]
+        print(x[:4, :])
+        xs = x.shape
+
         for epoch in range(n_epoch):
+            if epoch % 100 == 0:
+                self.plot(x, d)
+
             p = np.random.permutation(xlen)
-            self.plot()
+            # p = np.arange(xlen)
+            errors = 0
+
             for batch_x, batch_y in zip(split(x[p], batch_size), split(d[p], batch_size)):
                 w0 = self.w
                 bxs = batch_x.shape
@@ -44,51 +37,70 @@ class Perceptron:
 
                 y = self.predict(batch_x)
                 err = batch_y - y
-                w = w0 + batch_x.T @ err
+                errors += np.sum(np.abs(err))
+                update = batch_x.T @ err
+                w = w0 + update
                 self.w = w
 
                 # r = np.sum(w0 - w)
 
-    def predict(self, x):
-        return f(x @ self.w)
+            print('errors:', errors)
 
-    def plot(self):
+            if errors == 0:
+                self.plot(x, d)
+                break
+
+    def predict(self, x):
+        xw = x @ self.w
+        return activation.binary_step(xw)
+
+    def plot(self, x, y):
         plt.grid()
-        plt.axis([-10, 10, -10, 10])
+        x1min = x[:, 1].min() - 1
+        x1max = x[:, 1].max() + 1
+        x2min = x[:, 2].min() - 1
+        x2max = x[:, 2].max() + 1
+        plt.axis([x1min, x1max, x2min, x2max])
 
         # plot data
-        plt.scatter(*c1[:, :-1].T)
-        plt.scatter(*c2[:, :-1].T)
+        c1 = x[y.astype(bool).T[0]]
+        c2 = x[~y.astype(bool).T[0]]
 
-        x1, x2 = self.w.T[0]
+        plt.scatter(c1[:, 1], c1[:, 2], marker='^')
+        plt.scatter(c2[:, 1], c2[:, 2], marker='v')
 
-        plt.scatter(x1, x2, marker='s')
-        plt.plot([0, x1], [0, x2], c='k')
-        n = 10 ** 2
-        plt.plot(
-            [-x2, x2],
-            [x1, -x1],
-            c='pink'
-        )
+        # plot weights
+        bias, w1, w2 = self.w.T[0]
+        plt.quiver(0, 0, w1, w2, angles='xy', scale_units='xy', scale=1)
+
+        def get_x2(x1):
+            return (-w1 * x1 + bias) / w2
+
+        plt.plot([-100, 100], [get_x2(-100), get_x2(100)], c='k')
         plt.show()
 
     def __str__(self):
-        return f'Perceptron :{self.w}'
+        return f'Perceptron: {self.w}'
 
 
 def main():
-    # x = np.array([
-    #     [1, 2],
-    #     [-1, 2],
-    #     [0, -1],
-    # ])
-    # y = np.array([1, 0, 0]).reshape(-1, 1)
+    c1 = generate_data(100, 1, 0, 2 + 5)
+    c2 = generate_data(100, 0, -2, -2 + 5)
+
+    data = np.array([*c1, *c2])
+    np.random.shuffle(data)
+
+    x = data[:, :-1]
+    y = data[:, -1].reshape(-1, 1)
+
+    x = np.array([[0, 0], [0, 1], [1, 1], [1, 0]])
+    y = np.array([0, 0, 1, 0]).reshape(-1, 1)
 
     print(x.shape)
     print(y.shape)
 
     p = Perceptron()
-    p.fit(x, y, n_epoch=3)
+    p.fit(x, y)
 
 
 if __name__ == '__main__':

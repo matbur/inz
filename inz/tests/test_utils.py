@@ -1,11 +1,19 @@
 import numpy as np
 import pytest
 
-from inz import split
+from inz.utils import split
 
 
 def test_split_list_int():
     ints = list(range(7))
+    want = [[0, 1, 2], [3, 4, 5], [6]]
+    get = list(split(ints, 3))
+    assert len(get) == len(want)
+    assert get == want
+
+
+def test_split_int():
+    ints = range(7)
     want = [[0, 1, 2], [3, 4, 5], [6]]
     get = list(split(ints, 3))
     assert len(get) == len(want)
@@ -28,6 +36,14 @@ def test_split_list_str():
     assert get == want
 
 
+def test_str():
+    string = ''.join(map(str, range(6)))
+    want = [['0', '1'], ['2', '3'], ['4', '5']]
+    get = list(split(string, 2))
+    assert len(get) == len(want)
+    assert get == want
+
+
 def test_split_ndarray_int():
     array = np.arange(10, dtype=int).reshape(-1, 2)
     want = [np.array([[0, 1], [2, 3]]),
@@ -35,7 +51,9 @@ def test_split_ndarray_int():
             np.array([[8, 9]])]
     get = list(split(array, 2))
     assert len(get) == len(want)
-    assert all([np.array_equal(i, j) for i, j in zip(get, want)])
+    for i, j in zip(get, want):
+        assert type(i) == type(j)
+        assert np.array_equal(i, j)
 
 
 def test_split_generator_str():
@@ -44,6 +62,7 @@ def test_split_generator_str():
     get = list(split(strings, 2))
     assert len(get) == len(want)
     assert get == want
+
 
 def test_split_list_int_not_allow():
     ints = list(range(7))
@@ -75,7 +94,9 @@ def test_split_ndarray_int_not_allow():
             np.array([[4, 5], [6, 7]])]
     get = list(split(array, 2, False))
     assert len(get) == len(want)
-    assert all([np.array_equal(i, j) for i, j in zip(get, want)])
+    for i, j in zip(get, want):
+        assert type(i) == type(j)
+        assert np.array_equal(i, j)
 
 
 def test_split_generator_str_not_allow():
@@ -84,6 +105,7 @@ def test_split_generator_str_not_allow():
     get = list(split(strings, 2, False))
     assert len(get) == len(want)
     assert get == want
+
 
 if __name__ == '__main__':
     pytest.main()

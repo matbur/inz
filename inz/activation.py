@@ -1,8 +1,7 @@
-"""
+""" This module contains all activation functions.
 
 source: https://en.wikipedia.org/wiki/Activation_function
 """
-from typing import Iterable, List
 
 import numpy as np
 
@@ -52,6 +51,8 @@ def relu(x, derivative=False):
     return max(0., x)
 
 
-def softmax(x: Iterable[float]) -> List[float]:
-    s = sum(np.exp(x))
-    return [np.exp(i) / s for i in x]
+def softmax(x):
+    rows_max = np.max(x, axis=1).reshape(-1, 1)
+    e_x = np.exp(x - rows_max)
+    div = np.sum(e_x, axis=1).reshape(-1, 1)
+    return e_x / div

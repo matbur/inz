@@ -8,15 +8,18 @@ def get_level(level: str):
 
 def create_logger(name: str = None, level='INFO', filename=None):
     level = get_level(level)
+    formatter = '%(asctime)s|%(name)s|%(levelname)s|%(message)s'
 
-    logging.basicConfig(filename=filename, level=level)
+    logging.basicConfig(
+        format=formatter,
+        filename=filename,
+        level=level
+    )
 
     logger = logging.getLogger(name)
-    formatter = logging.Formatter('%(asctime)s|%(name)s|%(levelname)s|%(message)s')
 
     ch = logging.StreamHandler()
     ch.setLevel(level)
-    ch.setFormatter(formatter)
     logger.addHandler(ch)
 
     logger.debug('New logger created')

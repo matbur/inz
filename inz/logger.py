@@ -6,26 +6,31 @@ def get_level(level: str):
     return getattr(logging, level)
 
 
-def create_logger(name: str = None, level='INFO', filename=None):
-    level = get_level(level)
-    formatter = '%(asctime)s|%(name)s|%(levelname)s|%(message)s'
+def create_logger(name: str = None, con_level='INFO', file_level='DEBUG', filename=None):
+    con_level = get_level(con_level)
+    file_level = get_level(file_level)
 
-    logging.basicConfig(
-        format=formatter,
-        filename=filename,
-        level=level
-    )
+    fmt = '%(asctime)s|%(name)s|%(funcName)s:%(lineno)d|%(levelname)s|%(message)s'
 
+    formatter = logging.Formatter(fmt)
     logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
-    ch.setLevel(level)
+    ch.setFormatter(formatter)
+    ch.setLevel(con_level)
     logger.addHandler(ch)
+
+    if filename is not None:
+        fh = logging.FileHandler(filename)
+        fh.setFormatter(formatter)
+        fh.setLevel(file_level)
+        logger.addHandler(fh)
 
     logger.debug('New logger created')
     return logger
 
 
 if __name__ == '__main__':
-    logger = create_logger(level='DEBUG', filename='somefile.log')
+    logger = create_logger(con_level='DEBUG', filename='somefile.log')
     logger.debug('hello world')

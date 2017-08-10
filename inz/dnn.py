@@ -28,7 +28,7 @@ class DNN:
 
         xlen = len(X_inputs)
         for epoch in range(n_epoch):
-            logger.info('epoch:', epoch)
+            logger.info('epoch: {}'.format(epoch))
 
             # p = np.random.permutation(xlen)
             p = np.arange(xlen)

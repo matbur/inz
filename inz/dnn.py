@@ -1,7 +1,16 @@
+from pathlib import Path
+
 import numpy as np
 
-from inz import activation as act
 from inz.layers import Layer, fully_connected, input_data
+from inz.logger import create_logger
+from inz.utils import split
+
+logger = create_logger(__name__, con_level='DEBUG', filename=Path(__file__).with_suffix('.log'))
+
+
+def loss(a, b) -> np.ndarray:
+    return np.sum((a - b) ** 2) / 2
 
 
 class DNN:
@@ -13,8 +22,23 @@ class DNN:
             layer = layer.previous
         self.input = layer
 
-    def fit(self, X_inputs: list, Y_targets: list, n_epoch=10, batch_size=64, shuffle=False):
-        pass
+        self._learn_coef = .2
+
+    def fit(self, X_inputs: np.ndarray, Y_targets: np.ndarray, n_epoch=10, batch_size=64, shuffle=False):
+
+        xlen = len(X_inputs)
+        for epoch in range(n_epoch):
+            logger.info('epoch:', epoch)
+
+            # p = np.random.permutation(xlen)
+            p = np.arange(xlen)
+            batches_x = split(X_inputs[p], batch_size)
+            batches_y = split(Y_targets[p], batch_size)
+            for batch_x, batch_y in zip(batches_x, batches_y):
+                self.input.feedforward(batch_x)
+                self.network.calc_delta(batch_y)
+                self.network.calc_gradient()
+                self.network.update_weights()
 
     def get_weights(self):
         pass
@@ -35,17 +59,36 @@ class DNN:
         pass
 
 
-if __name__ == '__main__':
+def it(network: Layer, attr, i=0):
+    values = getattr(network, attr)
+    previous = network.previous
+
+    if previous is None:
+        return
+    print(attr)
+    print('Layer: {}, i: {} {}.shape: {}'.format(network.id, i, attr, values.shape))
+    print(values)
+    it(previous, attr, i + 1)
+
+
+def main():
+    np.random.seed(42)
+
     x = np.array(([1, 1], [1, 0], [0, 1], [0, 0]), dtype=float)
     y = np.array(([1, 0], [0, 1], [0, 1], [1, 0]), dtype=float)
 
     inp = input_data((None, 2))
     fc1 = fully_connected(inp, 3)
-    fc2 = fully_connected(fc1, 2, activation=act.softmax)
+    fc2 = fully_connected(fc1, 2)
 
     model = DNN(fc2)
+    model.fit(x, y, n_epoch=100)
 
-    np_round = np.round(model.predict(x), 3)
+    # it(model.network, 'W')
+    print(inp)
+    print(fc1)
+    print(fc2)
 
-    for i, j, k in zip(x, np_round, y):
-        print(i, j, k)
+
+if __name__ == '__main__':
+    main()

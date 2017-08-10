@@ -1,9 +1,16 @@
-import logging
+from pathlib import Path
 from typing import Optional, Tuple
 
 import numpy as np
 
 from inz import activation as act
+from inz.logger import create_logger
+
+logger = create_logger(
+    __name__,
+    con_level='DEBUG',
+    filename=Path(__file__).with_suffix('.log'),
+)
 
 
 def gen_weights():
@@ -23,7 +30,8 @@ weights = gen_weights()
 class Layer:
     id = 0
 
-    def __init__(self, shape, activation=act.binary_step):
+    def __init__(self, shape, activation=act.sigmoid):
+        self.learn_coef = .2
         self.shape = shape
         self.n_inputs = shape[0]
         self.n_outputs = shape[1]
@@ -35,11 +43,20 @@ class Layer:
         if shape[0] is not None:
             # self.W = np.random.random(shape) - .5
             # self.b = np.random.random((1, shape[1])) - .5
-            self.W = next(weights)
-            self.b = next(weights)
+
+            self.b = np.random.random((1, shape[1]))
+            self.W = np.random.random(shape)
+            # self.W = next(weights)
+            # self.b = next(weights)
 
         self.previous: Layer = None
         self.next: Layer = None
+
+        self.y = None
+        self.z = None
+        self.delta = None
+        self.gradient = None
+        self.adjustment = None
 
         self.id = Layer.id
         Layer.id += 1
@@ -48,38 +65,85 @@ class Layer:
         is_first = self.previous is None
         is_last = self.next is None
 
-        logging.warning('Layer {.id}: got input np.{!r}'.format(self, x))
+        # logger.debug('Layer {.id}: got input\n{!r}'.format(self, x))
         if is_first:
+            # logger.debug("Layer {.id}: it's first, so pass".format(self))
+            self.y = x
             return self.next.feedforward(x)
 
-        logging.warning('x.shape: {}'.format(x.shape))
-        logging.warning('W.shape: {}'.format(self.W.shape))
-        logging.warning('b.shape: {}'.format(self.b.shape))
-        logging.warning('predicted y.shape: {}'.format((x.shape[0], self.W.shape[1])))
+        # logger.debug('x.shape: {}'.format(x.shape))
+        # logger.debug('W.shape: {}'.format(self.W.shape))
+        # logger.debug('b.shape: {}'.format(self.b.shape))
+        # logger.debug('predicted y.shape: {}'.format((x.shape[0], self.W.shape[1])))
 
         m = x @ self.W
-        logging.warning('Layer {.id}: multiplied np.{!r}'.format(self, m))
-        m += self.b
-        logging.warning('Layer {.id}: added np.{!r}'.format(self, m))
-        y = self.activation(m)
-        logging.warning('Layer {.id}: returns np.{!r}'.format(self, y))
+        # logger.debug('Layer {.id}: multiplied input by weights\n{!r}'.format(self, m))
+        a = m + self.b
+        # logger.debug('Layer {.id}: added bias\n{!r}'.format(self, a))
+        y = self.activation(a)
+        # logger.debug('Layer {.id}: returns\n{!r}'.format(self, y))
+
+        self.y = y
+        self.z = a
 
         return y if is_last else self.next.feedforward(y)
 
-    def backpropagate(self):
-        pass
+    def calc_delta(self, d=None):
+        is_first = self.previous is None
+        is_last = self.next is None
+
+        if is_first:
+            return
+
+        if is_last:
+            self.delta = (self.y[0] - d[0]) * self.activation(self.z[0], True)
+            return self.previous.calc_delta()
+
+        self.delta = np.dot(self.next.delta, self.next.W.T) * self.activation(self.z[0], True)
+
+        self.previous.calc_delta()
+
+    def calc_gradient(self):
+        is_first = self.previous is None
+        is_last = self.next is None
+
+        if is_first:
+            return
+
+        y = np.r_[[1], self.previous.y[0]][np.newaxis].T
+        delta = self.delta[np.newaxis]
+        dot = np.dot(y, delta)
+        self.gradient = dot
+
+        self.previous.calc_gradient()
+
+    def update_weights(self):
+        is_first = self.previous is None
+        is_last = self.next is None
+
+        if is_first:
+            return
+
+        adjustment_W = self.gradient[1:]
+        adjustment_b = self.gradient[:1]
+
+        self.W -= adjustment_W * self.learn_coef
+        self.b -= adjustment_b * self.learn_coef
+
+        self.previous.update_weights()
 
     def __repr__(self):
-        if self.id == 0:
+        if None in self.shape:
             return f'Layer {self.id}: shape:{self.shape}'
-        return f'Layer {self.id}: W:{self.W.shape} b:{self.b.shape}\n{self.W} = W\n{self.b} = b'
+        #TODO: swap W i b
+        return f'Layer {self.id}: W:{self.W.shape} b:{self.b.shape}\n{self.b} = b\n{self.W} = W'
 
 
 def input_data(shape: Tuple[Optional[int], int]) -> Layer:
     return Layer(shape)
 
 
-def fully_connected(incoming: Layer, n_units: int, activation=act.binary_step) -> Layer:
+def fully_connected(incoming: Layer, n_units: int, activation=act.sigmoid) -> Layer:
     shape = (incoming.n_outputs, n_units)
     layer = Layer(shape, activation)
     layer.previous = incoming
@@ -92,24 +156,66 @@ def dropout(incoming: Layer, keep_prob=.8) -> Layer:
 
 
 def regression(incoming, optimizer='adam'):
-    pass
+    def loss(a, b) -> np.ndarray:
+        return np.sum((a - b) ** 2) / 2
+
+    shape = (None, None)
+    layer = Layer(shape)
+    layer.previous = incoming
+    return layer
 
 
-if __name__ == '__main__':
+def it(network: Layer, attr, i=0):
+    values = getattr(network, attr)
+    previous = network.previous
+
+    if previous is None:
+        return
+    print(attr)
+    print('Layer: {}, i: {} {}.shape: {}'.format(network.id, i, attr, values.shape))
+    print(values)
+    it(previous, attr, i + 1)
+
+
+def main():
     np.random.seed(42)
 
     inp = input_data(shape=(None, 2))
     fc1 = fully_connected(inp, 3, activation=act.sigmoid)
     fc2 = fully_connected(fc1, 2, activation=act.sigmoid)
 
-    x = np.array(([1, 1], [1, 0], [0, 1], [0, 0]), dtype=float)
-    y = np.array(([1, 0], [0, 1], [0, 1], [1, 0]), dtype=float)
+    x = np.array(([1, 1], [1, 0], [0, 1], [0, 0])[:1],
+                 # [1, 1], [1, 0], [0, 1], [0, 0], [1, 1], [1, 0], [0, 1], [0, 0],),
+                 dtype=float)
+    y = np.array(([1, 0], [0, 1], [0, 1], [1, 0])[:1],
+                 # [1, 0], [0, 1], [0, 1], [1, 0], [1, 0], [0, 1], [0, 1], [1, 0],),
+                 dtype=float)
+
+    print(x.shape)
+    print(y.shape)
 
     print(inp)
     print(fc1)
     print(fc2)
 
-    np_round = np.round(inp.feedforward(x), 3)
+    # np_round = np.round(inp.feedforward(x), 3)
+    # for i, j, k in zip(x, np_round, y):
+    #     print(i, j, k)
 
-    for i, j, k in zip(x, np_round, y):
-        print(i, j, k)
+    for i in range(1000):
+        inp.feedforward(x)
+        fc2.calc_delta(y)
+        fc2.calc_gradient()
+        fc2.update_weights()
+
+    print()
+    it(fc2, 'delta')
+    print()
+    it(fc2, 'gradient')
+
+    print(inp)
+    print(fc1)
+    print(fc2)
+
+if __name__ == '__main__':
+    main()

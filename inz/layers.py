@@ -96,10 +96,10 @@ class Layer:
             return
 
         if is_last:
-            self.delta = (self.y[0] - d[0]) * self.activation(self.z[0], True)
+            self.delta = (self.y - d) * self.activation(self.z, True)
             return self.previous.calc_delta()
 
-        self.delta = np.dot(self.next.delta, self.next.W.T) * self.activation(self.z[0], True)
+        self.delta = np.dot(self.next.delta, self.next.W.T) * self.activation(self.z, True)
 
         self.previous.calc_delta()
 
@@ -111,7 +111,7 @@ class Layer:
             return
 
         y = np.r_[[1], self.previous.y[0]][np.newaxis].T
-        delta = self.delta[np.newaxis]
+        delta = self.delta
         dot = np.dot(y, delta)
         self.gradient = dot
 
@@ -166,12 +166,13 @@ def regression(incoming, optimizer='adam'):
 
 
 def it(network: Layer, attr, i=0):
+    if i == 0:
+        print(attr)
     values = getattr(network, attr)
     previous = network.previous
 
     if previous is None:
         return
-    print(attr)
     print('Layer: {}, i: {} {}.shape: {}'.format(network.id, i, attr, values.shape))
     print(values)
     it(previous, attr, i + 1)
@@ -202,17 +203,20 @@ def main():
     # for i, j, k in zip(x, np_round, y):
     #     print(i, j, k)
 
-    for i in range(1000):
+    for i in range(100):
         inp.feedforward(x)
         fc2.calc_delta(y)
         fc2.calc_gradient()
         fc2.update_weights()
 
     print()
+    it(fc2, 'y')
+    print()
     it(fc2, 'delta')
     print()
     it(fc2, 'gradient')
 
+    print()
     print(inp)
     print(fc1)
     print(fc2)

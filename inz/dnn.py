@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from inz.layers import Layer, fully_connected, input_data
@@ -11,6 +12,9 @@ logger = create_logger(__name__, con_level='DEBUG', filename=Path(__file__).with
 
 def loss(a, b) -> np.ndarray:
     return np.sum((a - b) ** 2) / 2
+
+
+ERRORS = {'x': [], 'y': []}
 
 
 class DNN:
@@ -28,17 +32,22 @@ class DNN:
 
         xlen = len(X_inputs)
         for epoch in range(n_epoch):
-            logger.info('epoch: {}'.format(epoch))
-
             # p = np.random.permutation(xlen)
             p = np.arange(xlen)
             batches_x = split(X_inputs[p], batch_size)
             batches_y = split(Y_targets[p], batch_size)
+            err = []
             for batch_x, batch_y in zip(batches_x, batches_y):
                 self.input.feedforward(batch_x)
                 self.network.calc_delta(batch_y)
                 self.network.calc_gradient()
                 self.network.update_weights()
+                e = loss(self.network.y, batch_y)
+                err.append(e)
+            mean = np.mean(err)
+            ERRORS['x'].append(epoch)
+            ERRORS['y'].append(mean)
+            logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))
 
     def get_weights(self):
         pass
@@ -82,12 +91,16 @@ def main():
     fc2 = fully_connected(fc1, 2)
 
     model = DNN(fc2)
-    model.fit(x, y, n_epoch=100)
+    model.fit(x, y, n_epoch=3000, batch_size=1)
 
     # it(model.network, 'W')
     print(inp)
     print(fc1)
     print(fc2)
+
+    plt.grid()
+    plt.plot(ERRORS['x'], ERRORS['y'])
+    plt.show()
 
 
 if __name__ == '__main__':

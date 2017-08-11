@@ -5,6 +5,8 @@ from typing import Iterable
 
 import numpy as np
 
+from .layers import Layer
+
 
 def old_split(iterable: Iterable, width: int, allow_missing=True):
     """ Generator yields iterable in parts.
@@ -57,3 +59,18 @@ def split(iterable: Iterable, width: int, allow_missing=True):
             retval = np.array(retval)
 
         yield retval
+
+
+def it(network: Layer, attr, i=0):
+    if i == 0:
+        print()
+        print(attr)
+    values = getattr(network, attr)
+    previous = network.previous
+
+    if previous is None:
+        return
+    shape = values.shape if values is not None else None
+    print('Layer: {}, i: {} {}.shape: {}'.format(network.id, i, attr, shape))
+    print(values)
+    it(previous, attr, i + 1)

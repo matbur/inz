@@ -3,8 +3,8 @@ from typing import Optional, Tuple
 
 import numpy as np
 
-from inz import activation as act
-from inz.logger import create_logger
+from . import activation as act
+from .logger import create_logger
 
 logger = create_logger(
     __name__,
@@ -56,7 +56,6 @@ class Layer:
         self.z = None
         self.delta = None
         self.gradient = None
-        self.adjustment = None
 
         self.id = Layer.id
         Layer.id += 1
@@ -111,7 +110,7 @@ class Layer:
             return
 
         y = np.r_[[1], self.previous.y[0]][np.newaxis].T
-        delta = self.delta
+        delta = self.delta  # .mean(axis=0)[np.newaxis]
         dot = np.dot(y, delta)
         self.gradient = dot
 
@@ -135,7 +134,7 @@ class Layer:
     def __repr__(self):
         if None in self.shape:
             return f'Layer {self.id}: shape:{self.shape}'
-        #TODO: swap W i b
+        # TODO: swap W i b
         return f'Layer {self.id}: W:{self.W.shape} b:{self.b.shape}\n{self.b} = b\n{self.W} = W'
 
 
@@ -163,63 +162,3 @@ def regression(incoming, optimizer='adam'):
     layer = Layer(shape)
     layer.previous = incoming
     return layer
-
-
-def it(network: Layer, attr, i=0):
-    if i == 0:
-        print(attr)
-    values = getattr(network, attr)
-    previous = network.previous
-
-    if previous is None:
-        return
-    print('Layer: {}, i: {} {}.shape: {}'.format(network.id, i, attr, values.shape))
-    print(values)
-    it(previous, attr, i + 1)
-
-
-def main():
-    np.random.seed(42)
-
-    inp = input_data(shape=(None, 2))
-    fc1 = fully_connected(inp, 3, activation=act.sigmoid)
-    fc2 = fully_connected(fc1, 2, activation=act.sigmoid)
-
-    x = np.array(([1, 1], [1, 0], [0, 1], [0, 0])[:1],
-                 # [1, 1], [1, 0], [0, 1], [0, 0], [1, 1], [1, 0], [0, 1], [0, 0],),
-                 dtype=float)
-    y = np.array(([1, 0], [0, 1], [0, 1], [1, 0])[:1],
-                 # [1, 0], [0, 1], [0, 1], [1, 0], [1, 0], [0, 1], [0, 1], [1, 0],),
-                 dtype=float)
-
-    print(x.shape)
-    print(y.shape)
-
-    print(inp)
-    print(fc1)
-    print(fc2)
-
-    # np_round = np.round(inp.feedforward(x), 3)
-    # for i, j, k in zip(x, np_round, y):
-    #     print(i, j, k)
-
-    for i in range(100):
-        inp.feedforward(x)
-        fc2.calc_delta(y)
-        fc2.calc_gradient()
-        fc2.update_weights()
-
-    print()
-    it(fc2, 'y')
-    print()
-    it(fc2, 'delta')
-    print()
-    it(fc2, 'gradient')
-
-    print()
-    print(inp)
-    print(fc1)
-    print(fc2)
-
-if __name__ == '__main__':
-    main()

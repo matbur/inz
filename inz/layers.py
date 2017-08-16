@@ -8,7 +8,7 @@ from .logger import create_logger
 
 logger = create_logger(
     __name__,
-    con_level='DEBUG',
+    # con_level='DEBUG',
     filename=Path(__file__).with_suffix('.log'),
 )
 
@@ -30,20 +30,20 @@ weights = gen_weights()
 class Layer:
     id = 0
 
-    def __init__(self, shape, activation=act.sigmoid):
-        self.learn_coef = .2
+    def __init__(self, shape, activation='sigmoid'):
+        self.learning_rate = .2
         self.shape = shape
         self.n_inputs = shape[0]
         self.n_outputs = shape[1]
 
-        self.activation = activation
+        self.activation_name = activation
+        self.activation = self.parse_activation()
 
-        self.W = None
-        self.b = None
+        self.W: np.ndarray = None
+        self.b: np.ndarray = None
         if shape[0] is not None:
             # self.W = np.random.random(shape) - .5
             # self.b = np.random.random((1, shape[1])) - .5
-
             self.b = np.random.random((1, shape[1]))
             self.W = np.random.random(shape)
             # self.W = next(weights)
@@ -52,38 +52,32 @@ class Layer:
         self.previous: Layer = None
         self.next: Layer = None
 
-        self.y = None
-        self.z = None
-        self.delta = None
-        self.gradient = None
+        self.y: np.ndarray = None
+        self.z: np.ndarray = None
+        self.delta: np.ndarray = None
+        self.gradient: np.ndarray = None
 
         self.id = Layer.id
         Layer.id += 1
+
+    def parse_activation(self):
+        return getattr(act, self.activation_name)
 
     def feedforward(self, x: np.ndarray) -> np.ndarray:
         is_first = self.previous is None
         is_last = self.next is None
 
-        # logger.debug('Layer {.id}: got input\n{!r}'.format(self, x))
         if is_first:
-            # logger.debug("Layer {.id}: it's first, so pass".format(self))
             self.y = x
             return self.next.feedforward(x)
 
-        # logger.debug('x.shape: {}'.format(x.shape))
-        # logger.debug('W.shape: {}'.format(self.W.shape))
-        # logger.debug('b.shape: {}'.format(self.b.shape))
-        # logger.debug('predicted y.shape: {}'.format((x.shape[0], self.W.shape[1])))
-
-        m = x @ self.W
-        # logger.debug('Layer {.id}: multiplied input by weights\n{!r}'.format(self, m))
-        a = m + self.b
-        # logger.debug('Layer {.id}: added bias\n{!r}'.format(self, a))
-        y = self.activation(a)
-        # logger.debug('Layer {.id}: returns\n{!r}'.format(self, y))
+        logger.debug('Layer {.id}: got input\n{!r}'.format(self, x))
+        z = x @ self.W + self.b
+        y = self.activation(z)
+        logger.debug('Layer {.id}: returns\n{!r}'.format(self, y))
 
         self.y = y
-        self.z = a
+        self.z = z
 
         return y if is_last else self.next.feedforward(y)
 
@@ -126,8 +120,8 @@ class Layer:
         adjustment_W = self.gradient[1:]
         adjustment_b = self.gradient[:1]
 
-        self.W -= adjustment_W * self.learn_coef
-        self.b -= adjustment_b * self.learn_coef
+        self.W -= adjustment_W * self.learning_rate
+        self.b -= adjustment_b * self.learning_rate
 
         self.previous.update_weights()
 
@@ -142,7 +136,7 @@ def input_data(shape: Tuple[Optional[int], int]) -> Layer:
     return Layer(shape)
 
 
-def fully_connected(incoming: Layer, n_units: int, activation=act.sigmoid) -> Layer:
+def fully_connected(incoming: Layer, n_units: int, activation='sigmoid') -> Layer:
     shape = (incoming.n_outputs, n_units)
     layer = Layer(shape, activation)
     layer.previous = incoming

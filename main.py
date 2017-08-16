@@ -1,6 +1,8 @@
+from time import sleep
+
 import numpy as np
 
-from inz import DNN, act, fully_connected, input_data
+from inz import DNN, fully_connected, input_data
 
 
 def main():
@@ -10,25 +12,34 @@ def main():
         [1, 1], [1, 0], [0, 1], [0, 0],
         [1, 1], [1, 0], [0, 1], [0, 0],
         [1, 1], [1, 0], [0, 1], [0, 0],
+        [1, 1], [1, 0], [0, 1], [0, 0],
     ], dtype=float)
     y = np.array([
+        [1, 0], [0, 1], [0, 1], [1, 0],
         [1, 0], [0, 1], [0, 1], [1, 0],
         [1, 0], [0, 1], [0, 1], [1, 0],
         [1, 0], [0, 1], [0, 1], [1, 0],
     ], dtype=float)
 
     inp = input_data(shape=(None, 2))
-    fc1 = fully_connected(inp, 3, activation=act.sigmoid)
-    fc2 = fully_connected(fc1, 2, activation=act.sigmoid)
+    fc1 = fully_connected(inp, 3)
+    # fc2 = fully_connected(fc1, 5)
+    # fc3 = fully_connected(fc2, 4)
+    fc4 = fully_connected(fc1, 2)
+    net = fc4
 
-    model = DNN(fc2)
-    model.fit(x, y, n_epoch=30000, batch_size=1)
+    model = DNN(net)
+    # model.fit(x, y, n_epoch=1, batch_size=1)
 
-    model.show('y')
-    model.show('delta')
-    model.show('gradient')
+    sleep(.1)
 
-    model.plot_error()
+    # model.show(['W', 'b', 'y', 'delta', 'gradient'], not False)
+
+    model.show(['W', 'b'], not False)
+    model.load('model.json')
+    model.show(['W', 'b'], not False)
+
+    # model.plot_error()
 
 
 if __name__ == '__main__':

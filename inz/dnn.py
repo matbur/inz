@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -5,7 +6,7 @@ import numpy as np
 
 from .layers import Layer
 from .logger import create_logger
-from .utils import it, split
+from .utils import iter_layers, split
 
 logger = create_logger(__name__, con_level='DEBUG', filename=Path(__file__).with_suffix('.log'))
 
@@ -50,10 +51,25 @@ class DNN:
         pass
 
     def load(self, model_file: str):
-        pass
+        data = json.loads(Path(model_file).read_text())
+        it = iter(data)
+        layer = self.network
+        while layer.previous is not None:
+            W = next(it)
+            layer.W = np.array(W)
+            b = next(it)
+            layer.b = np.array(b)
+            layer = layer.previous
 
     def save(self, model_file: str):
-        pass
+        data = []
+        layer = self.network
+        while layer.previous is not None:
+            data.append(layer.W.tolist())
+            data.append(layer.b.tolist())
+            layer = layer.previous
+
+        Path(model_file).write_text(json.dumps(data))
 
     def predict(self, X: list):
         return self.input.feedforward(X)
@@ -72,5 +88,8 @@ class DNN:
         plt.scatter(x, y)
         plt.show()
 
-    def show(self, param):
-        it(self.network, param)
+    def show(self, param, with_values=True):
+        if isinstance(param, str):
+            param = [param]
+        for i in param:
+            iter_layers(self.network, i, with_values)

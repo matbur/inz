@@ -15,7 +15,7 @@ def loss(a, b) -> np.ndarray:
     return np.sum((a - b) ** 2) / 2
 
 
-class DNN:
+class Model:
     def __init__(self, network: Layer):
         self.network = network
 
@@ -37,12 +37,13 @@ class DNN:
             batches_y = split(Y_targets[p], batch_size)
             err = []
             for batch_x, batch_y in zip(batches_x, batches_y):
-                self.input.feedforward(batch_x)
-                self.network.calc_delta(batch_y)
-                self.network.calc_gradient()
-                self.network.update_weights()
-                e = loss(self.network.y, batch_y)
-                err.append(e)
+                for x, y in zip(batch_x, batch_y):
+                    self.input.feedforward(x[None])
+                    self.network.calc_delta(y[None])
+                    self.network.calc_gradient()
+                    self.network.update_weights()
+                    e = loss(self.network.y, batch_y)
+                    err.append(e)
             mean = np.mean(err)
             self.errors.append(mean)
             logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))
@@ -55,26 +56,23 @@ class DNN:
         it = iter(data)
         layer = self.network
         while layer.previous is not None:
-            W = next(it)
-            layer.W = np.array(W)
-            b = next(it)
-            layer.b = np.array(b)
+            tab = next(it)
+            layer.tab = np.array(tab)
             layer = layer.previous
 
     def save(self, model_file: str):
         data = []
         layer = self.network
         while layer.previous is not None:
-            data.append(layer.W.tolist())
-            data.append(layer.b.tolist())
+            data.append(layer.tab.tolist())
             layer = layer.previous
 
         Path(model_file).write_text(json.dumps(data))
 
-    def predict(self, X: list):
-        return self.input.feedforward(X)
+    def predict(self, x: np.ndarray):
+        return self.input.feedforward(x)
 
-    def predict_label(self, X: list):
+    def predict_label(self, x: np.ndarray):
         pass
 
     def set_weights(self, tensor, weights):

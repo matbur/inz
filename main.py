@@ -47,21 +47,25 @@ def main():
 
 
 def foo():
+    np.random.seed(1)
     x = np.array([
         [1, 1], [1, 0], [0, 1], [0, 0],
     ], dtype=float)
     y = np.array([
-        [0, 1], [0, 1], [0, 1], [1, 0],
+        [1, 0], [0, 1], [0, 1], [1, 0],
     ], dtype=float)
 
     inp = input_data((None, 2))
-    fc1 = fully_connected(inp, 3, activation='sigmoid')
-    fc2 = fully_connected(fc1, 2, activation='sigmoid')
+    fc1 = fully_connected(inp, 4, activation='sigmoid')
+    fc2 = fully_connected(fc1, 3, activation='sigmoid')
+    fc3 = fully_connected(fc2, 2, activation='sigmoid')
 
-    dnn = Model(fc2)
-    # dnn.fit(x, y)
+    dnn = Model(fc3)
+    dnn.fit(x, y, n_epoch=15000)
 
-    print(dnn.predict(x))
+    # print(dnn.predict(x))
+    for i in x:
+        print(dnn.predict(i))
     print(y)
 
 

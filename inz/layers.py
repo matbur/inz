@@ -41,7 +41,7 @@ class Layer:
 
         self.tab: np.ndarray = None
         if shape[0] is not None:
-            self.tab = np.random.random((shape[0] + 1, shape[1])) - .5
+            self.tab = np.random.random((shape[0] + 1, shape[1]))  # - .5
             # self.tab = next(weights)
 
         self.previous: Layer = None
@@ -60,19 +60,31 @@ class Layer:
 
     @property
     def W(self):
+        if self.tab is None:
+            return None
         return self.tab[1:]
 
     @property
     def b(self):
+        if self.tab is None:
+            return None
         return self.tab[:1]
 
     def parse_activation(self):
         return getattr(act, self.activation_name)
 
+    @staticmethod
+    def _add_bias(arr: np.ndarray):
+        return np.c_[np.ones(arr.shape[0]), arr]
+
+    @staticmethod
+    def _add_bias2(arr: np.ndarray):
+        return np.concatenate([[1], arr])
+
     def feedforward(self, x: np.ndarray) -> np.ndarray:
         # I assume that shape of x is [n, 1]
         if self.is_first:
-            x = np.c_[np.ones(x.shape[0]), x]
+            x = self._add_bias2(x)
             self.y = x
             return self.next.feedforward(x)
 
@@ -82,8 +94,7 @@ class Layer:
         logger.debug('Layer {.id}: returns\n{!r}'.format(self, y))
 
         if not self.is_last:
-            z = np.c_[np.ones(z.shape[0]), z]
-            y = np.c_[np.ones(y.shape[0]), y]
+            y = self._add_bias2(y)
         self.y = y
         self.z = z
 
@@ -96,22 +107,20 @@ class Layer:
             return
 
         if self.is_last:
-            self.delta = (self.y - d) * self.activation(self.z, True)
+            delta = (self.y - d) * self.activation(self.z, True)
+            self.delta = delta
             return self.previous.calc_delta()
 
-        self.delta = np.dot(self.next.delta, self.next.W.T) * self.activation(self.z, True)
+        delta = (self.next.delta @ self.next.tab.T)[1:] * self.activation(self.z, True)
+        self.delta = delta
 
         self.previous.calc_delta()
 
     def calc_gradient(self):
-
         if self.is_first:
             return
 
-        y = np.r_[[1], self.previous.y[0]][np.newaxis].T
-        delta = self.delta  # .mean(axis=0)[np.newaxis]
-        dot = np.dot(y, delta)
-        self.gradient = dot
+        self.gradient = self.previous.y[None].T @ self.delta[None]
 
         self.previous.calc_gradient()
 
@@ -119,11 +128,7 @@ class Layer:
         if self.is_first:
             return
 
-        adjustment_W = self.gradient[1:]
-        adjustment_b = self.gradient[:1]
-
-        self.W -= adjustment_W * self.learning_rate
-        self.b -= adjustment_b * self.learning_rate
+        self.tab -= self.gradient * self.learning_rate
 
         self.previous.update_weights()
 

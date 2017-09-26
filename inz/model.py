@@ -38,11 +38,15 @@ class Model:
             err = []
             for batch_x, batch_y in zip(batches_x, batches_y):
                 for x, y in zip(batch_x, batch_y):
-                    self.input.feedforward(x[None])
-                    self.network.calc_delta(y[None])
+                    self.input.feedforward(x)
+                    self.network.calc_delta(y)
+                    # self.show('delta')
                     self.network.calc_gradient()
+                    # self.show('gradient')
                     self.network.update_weights()
-                    e = loss(self.network.y, batch_y)
+                    # self.show('tab')
+                    1
+                    e = loss(self.network.y, y)
                     err.append(e)
             mean = np.mean(err)
             self.errors.append(mean)

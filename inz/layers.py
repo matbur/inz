@@ -142,6 +142,26 @@ class Layer:
 
         self.previous.calc_delta()
 
+    def calc_delta_new(self, d: np.ndarray = None):
+        if self.is_first:
+            return
+
+        if self.is_last:
+            d = d[None]
+            y_shape = self.y_new.shape
+            d_shape = d.shape
+            z_shape = self.z_new.shape
+            delta = (self.y_new - d) * self.activation(self.z_new, True)
+            self.delta_new = delta
+            return self.previous.calc_delta_new()
+
+        delta = (self.next.delta @ self.next.tab.T)[1:] * self.activation(self.z_new, True)
+        self.delta_new = delta
+
+        # assert np.array_equal(self.delta, self.delta_new[0])
+
+        self.previous.calc_delta_new()
+
     def calc_gradient(self):
         if self.is_first:
             return

@@ -41,6 +41,7 @@ class Model:
                     self.input.feedforward(x)
                     self.input.feedforward_new(x)
                     self.network.calc_delta(y)
+                    self.network.calc_delta_new(y)
                     # self.show('delta')
                     self.network.calc_gradient()
                     # self.show('gradient')

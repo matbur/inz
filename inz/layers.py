@@ -102,7 +102,33 @@ class Layer:
             return y
         return self.next.feedforward(y)
 
-    def calc_delta(self, d=None):
+    def feedforward_new(self, x: np.ndarray) -> np.ndarray:
+        if self.is_first:
+            # if x is 1-D vector, add dimension
+            if len(x.shape) == 1:
+                x = x[np.newaxis]
+            x = self._add_bias(x)
+            self.y_new = x
+            return self.next.feedforward_new(x)
+
+        logger.debug('Layer {.id}: got input\n{!r}'.format(self, x))
+        z = x @ self.tab
+        y = self.activation(z)
+        logger.debug('Layer {.id}: returns\n{!r}'.format(self, y))
+
+        if not self.is_last:
+            y = self._add_bias(y)
+        self.y_new = y
+        self.z_new = z
+
+        # assert np.array_equal(self.y, self.y2[0])
+        # assert np.array_equal(self.z, self.z2[0])
+
+        if self.is_last:
+            return y
+        return self.next.feedforward_new(y)
+
+    def calc_delta(self, d: np.ndarray = None):
         if self.is_first:
             return
 

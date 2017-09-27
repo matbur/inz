@@ -44,6 +44,7 @@ class Model:
                     self.network.calc_delta_new(y)
                     # self.show('delta')
                     self.network.calc_gradient()
+                    self.network.calc_gradient_new()
                     # self.show('gradient')
                     self.network.update_weights()
                     # self.show('tab')

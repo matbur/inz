@@ -148,9 +148,6 @@ class Layer:
 
         if self.is_last:
             d = d[None]
-            y_shape = self.y_new.shape
-            d_shape = d.shape
-            z_shape = self.z_new.shape
             delta = (self.y_new - d) * self.activation(self.z_new, True)
             self.delta_new = delta
             return self.previous.calc_delta_new()
@@ -158,7 +155,7 @@ class Layer:
         delta = (self.next.delta @ self.next.tab.T)[1:] * self.activation(self.z_new, True)
         self.delta_new = delta
 
-        # assert np.array_equal(self.delta, self.delta_new[0])
+        assert np.array_equal(self.delta, self.delta_new[0])
 
         self.previous.calc_delta_new()
 
@@ -169,6 +166,17 @@ class Layer:
         self.gradient = self.previous.y[None].T @ self.delta[None]
 
         self.previous.calc_gradient()
+
+    def calc_gradient_new(self):
+        if self.is_first:
+            return
+
+        gradient = self.previous.y_new.T @ self.delta_new
+        self.gradient_new = gradient
+
+        assert np.array_equal(self.gradient, self.gradient_new)
+
+        self.previous.calc_gradient_new()
 
     def update_weights(self):
         if self.is_first:

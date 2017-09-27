@@ -152,7 +152,7 @@ class Layer:
             self.delta_new = delta
             return self.previous.calc_delta_new()
 
-        delta = (self.next.delta @ self.next.tab.T)[1:] * self.activation(self.z_new, True)
+        delta = (self.next.delta_new[0] @ self.next.tab.T)[1:] * self.activation(self.z_new, True)
         self.delta_new = delta
 
         assert np.array_equal(self.delta, self.delta_new[0])

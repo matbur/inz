@@ -39,6 +39,7 @@ class Model:
             for batch_x, batch_y in zip(batches_x, batches_y):
                 for x, y in zip(batch_x, batch_y):
                     self.input.feedforward(x)
+                    self.input.feedforward_new(x)
                     self.network.calc_delta(y)
                     # self.show('delta')
                     self.network.calc_gradient()

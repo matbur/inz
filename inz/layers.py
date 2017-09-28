@@ -77,34 +77,6 @@ class Layer:
     def _add_bias(arr: np.ndarray):
         return np.c_[np.ones(arr.shape[0]), arr]
 
-    @staticmethod
-    def _add_bias2(arr: np.ndarray):
-        return np.concatenate([[1], arr])
-
-    def feedforward_old(self, x: np.ndarray) -> np.ndarray:
-        # I assume that shape of x is [n, 1]
-        if self.is_first:
-            x = self._add_bias2(x)
-            self.y_old = x
-            return self.next.feedforward_old(x)
-
-        logger.debug('Layer {.id}: got input\n{!r}'.format(self, x))
-        z = x @ self.tab
-        y = self.activation(z)
-        logger.debug('Layer {.id}: returns\n{!r}'.format(self, y))
-
-        if not self.is_last:
-            y = self._add_bias2(y)
-        self.y_old = y
-        self.z_old = z
-
-        assert np.array_equal(self.y, self.y_old[None])
-        assert np.array_equal(self.z, self.z_old[None])
-
-        if self.is_last:
-            return y
-        return self.next.feedforward_old(y)
-
     def feedforward(self, x: np.ndarray) -> np.ndarray:
         if self.is_first:
             # if x is 1-D vector, add dimension
@@ -128,22 +100,6 @@ class Layer:
             return y
         return self.next.feedforward(y)
 
-    def calc_delta_old(self, d: np.ndarray = None):
-        if self.is_first:
-            return
-
-        if self.is_last:
-            delta = (self.y_old - d) * self.activation(self.z_old, True)
-            self.delta_old = delta
-            return self.previous.calc_delta_old()
-
-        delta = (self.next.delta_old @ self.next.tab.T)[1:] * self.activation(self.z_old, True)
-        self.delta_old = delta
-
-        assert np.array_equal(self.delta, self.delta_old[None])
-
-        self.previous.calc_delta_old()
-
     def calc_delta(self, d: np.ndarray = None):
         if self.is_first:
             return
@@ -158,16 +114,6 @@ class Layer:
         self.delta = delta
 
         self.previous.calc_delta()
-
-    def calc_gradient_old(self):
-        if self.is_first:
-            return
-
-        self.gradient_old = self.previous.y_old[None].T @ self.delta_old[None]
-
-        assert np.array_equal(self.gradient_old, self.gradient)
-
-        self.previous.calc_gradient_old()
 
     def calc_gradient(self):
         if self.is_first:

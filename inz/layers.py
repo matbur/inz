@@ -9,6 +9,7 @@ from .logger import create_logger
 logger = create_logger(
     __name__,
     # con_level='DEBUG',
+    file_level='INFO',
     filename=Path(__file__).with_suffix('.log'),
 )
 
@@ -41,7 +42,7 @@ class Layer:
 
         self.tab: np.ndarray = None
         if shape[0] is not None:
-            self.tab = np.random.random((shape[0] + 1, shape[1]))  # - .5
+            self.tab = np.random.rand(shape[0] + 1, shape[1]) - .5
             # self.tab = next(weights)
 
         self.previous: Layer = None

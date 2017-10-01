@@ -40,12 +40,8 @@ class Model:
                 for x, y in zip(batch_x, batch_y):
                     self.input.feedforward(x)
                     self.network.calc_delta(y)
-                    # self.show('delta')
                     self.network.calc_gradient()
-                    # self.show('gradient')
                     self.network.update_weights()
-                    # self.show('tab')
-                    1
                     e = loss(self.network.y, y)
                     err.append(e)
             mean = np.mean(err)
@@ -71,7 +67,8 @@ class Model:
             data.append(layer.tab.tolist())
             layer = layer.previous
 
-        Path(model_file).write_text(json.dumps(data))
+        with open(model_file, 'w') as f:
+            json.dump(data, f)
 
     def predict(self, x: np.ndarray):
         return self.input.feedforward(x)

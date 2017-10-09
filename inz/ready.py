@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from tflearn import DNN, fully_connected, input_data, regression
@@ -21,28 +22,21 @@ MODEL_FILE = LOG_DIR / 'model_weights'
 
 def use_tflearn(x_train, y_train, x_test, y_test):
     net = input_data(shape=[None, x_train.shape[1]], name='input')
-    net = fully_connected(net, 192, activation='relu', bias_init='normal')
-    net = fully_connected(net, 128, activation='relu', bias_init='normal')
-    net = fully_connected(net, 96, activation='relu', bias_init='normal')
-    net = fully_connected(net, 64, activation='relu', bias_init='normal')
-    net = fully_connected(net, 48, activation='relu', bias_init='normal')
-    net = fully_connected(net, 32, activation='relu', bias_init='normal')
-    net = fully_connected(net, 24, activation='relu', bias_init='normal')
-    net = fully_connected(net, 16, activation='relu', bias_init='normal')
-    net = fully_connected(net, 12, activation='relu', bias_init='normal')
-    net = fully_connected(net, 8, activation='softmax', bias_init='normal')
+    net = fully_connected(net, 24, activation='sigmoid', bias_init='normal')
+    net = fully_connected(net, 16, activation='sigmoid', bias_init='normal')
+    net = fully_connected(net, 12, activation='sigmoid', bias_init='normal')
+    net = fully_connected(net, 8, activation='sigmoid', bias_init='normal')
     net = regression(net)
     model = DNN(net,
                 tensorboard_dir=TENSORBOARD_DIR.as_posix(),
                 tensorboard_verbose=3,
                 best_checkpoint_path=CHECKPOINT_PATH.as_posix())
     model.fit(x_train, y_train,
-              # batch_size=44,
               validation_set=(x_test, y_test),
-              n_epoch=1000,
+              n_epoch=100,
               batch_size=10,
               show_metric=True,
-              run_id='DNN3')
+              run_id='DNN-4f')
     model.save(MODEL_FILE.as_posix())
     return model
 
@@ -55,11 +49,24 @@ def vector2onehot(vector: np.ndarray):
     return data
 
 
+def get_data(num_features=20):
+    X = pd.read_csv('../data/data.csv')
+    y = X.pop('Choroba')
+
+    sel = SelectKBest(chi2, num_features).fit(X, y)
+    sup = sel.get_support()
+
+    X = X.drop(X.columns[~sup], axis=1)
+
+    X['Choroba'] = y
+
+    return X.values
+
+
 def main():
     np.random.seed(42)
 
-    data = pd.read_csv('../data/data.csv').values
-    print(data.shape)
+    data = get_data(4)
 
     train, test = train_test_split(data)
     print(train.shape, test.shape)

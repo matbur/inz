@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,23 +31,31 @@ class Model:
     def fit(self, X_inputs: np.ndarray, Y_targets: np.ndarray, n_epoch=10, batch_size=64, shuffle=False):
 
         xlen = len(X_inputs)
+        step = 0
         for epoch in range(n_epoch):
             # p = np.random.permutation(xlen)
             p = np.arange(xlen)
             batches_x = split(X_inputs[p], batch_size)
             batches_y = split(Y_targets[p], batch_size)
             err = []
-            for batch_x, batch_y in zip(batches_x, batches_y):
+            for i, (batch_x, batch_y) in enumerate(zip(batches_x, batches_y)):
+                step += 1
+                t0 = time()
                 for x, y in zip(batch_x, batch_y):
                     self.input.feedforward(x)
                     self.network.calc_delta(y)
                     self.network.calc_gradient()
                     self.network.update_weights()
-                    e = loss(self.network.y, y)
-                    err.append(e)
+
+                e = loss(self.predict(batch_x), batch_y)
+                err.append(e)
+                t = time() - t0
+                print(f'Training Step: {step} | total loss: {e} | time: {t}s')
+                print(f'epoch: {epoch} | acc: 0.5191 -- iter: {i * batch_size}/{xlen}')
+
             mean = np.mean(err)
             self.errors.append(mean)
-            logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))
+            # logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))
 
     def get_weights(self):
         pass

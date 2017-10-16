@@ -7,9 +7,14 @@ import numpy as np
 
 from .layers import Layer
 from .logger import create_logger
+from .schemas import NetworkSchema
 from .utils import iter_layers, split
 
-logger = create_logger(__name__, con_level='DEBUG', filename=Path(__file__).with_suffix('.log'))
+logger = create_logger(
+    __name__,
+    con_level='DEBUG',
+    filename=Path(__file__).with_suffix('.log')
+)
 
 
 def loss(a, b) -> np.ndarray:
@@ -57,24 +62,22 @@ class Model:
             self.errors.append(mean)
             # logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))
 
-    def get_weights(self):
-        pass
-
-    def load(self, model_file: str):
-        data = json.loads(Path(model_file).read_text())
-        it = iter(data)
-        layer = self.network
-        while layer.previous is not None:
-            tab = next(it)
-            layer.tab = np.array(tab)
-            layer = layer.previous
-
-    def save(self, model_file: str):
+    def get_weights(self) -> NetworkSchema:
         data = []
         layer = self.network
         while layer.previous is not None:
-            data.append(layer.tab.tolist())
+            tab = layer.tab.tolist()
+            data.append(tab)
             layer = layer.previous
+        return data
+
+    def load(self, model_file: str):
+        data_text = Path(model_file).read_text()
+        data = json.loads(data_text)
+        self.set_weights(data)
+
+    def save(self, model_file: str):
+        data = self.get_weights()
 
         with open(model_file, 'w') as f:
             json.dump(data, f)
@@ -85,8 +88,8 @@ class Model:
     def predict_label(self, x: np.ndarray):
         pass
 
-    def set_weights(self, tensor, weights):
-        pass
+    def set_weights(self, tensor: NetworkSchema):
+        self.network.load(tensor[::-1])
 
     def plot_error(self):
         plt.grid()

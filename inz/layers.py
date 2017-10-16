@@ -5,6 +5,7 @@ import numpy as np
 
 from . import activation as act
 from .logger import create_logger
+from .schemas import NetworkSchema
 
 logger = create_logger(
     __name__,
@@ -12,20 +13,6 @@ logger = create_logger(
     file_level='INFO',
     filename=Path(__file__).with_suffix('.log'),
 )
-
-
-def gen_weights():
-    yield np.array([[-0.54316974, 3.18716818, -3.45807859],
-                    [-0.05402973, -6.34248843, -6.58317728],
-                    [0.01800948, 6.57719873, 6.43227908]])
-
-    yield np.array([[-3.45402763, 3.41450737],
-                    [-0.49709841, 0.62235418],
-                    [7.63121836, -7.63994564],
-                    [-7.8834429, 7.88701914]])
-
-
-weights = gen_weights()
 
 
 class Layer:
@@ -133,10 +120,19 @@ class Layer:
 
         self.previous.update_weights()
 
+    def load(self, tabs: NetworkSchema):
+        if self.is_first:
+            return
+
+        tab = np.array(tabs.pop())
+        assert tab.shape == self.tab.shape, f'{tab.shape} != {self.tab.shape}'
+        self.tab = tab
+
+        self.previous.load(tabs)
+
     def __repr__(self):
         if None in self.shape:
             return f'Layer {self.id}: shape:{self.shape}'
-        # TODO: swap W i b
         return f'Layer {self.id}: tab:{self.tab.shape}\n{self.tab} = tab'
 
 

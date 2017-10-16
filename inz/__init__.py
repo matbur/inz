@@ -1,4 +1,3 @@
 from . import activation as act
-from .model import *
-from .layers import *
-from .utils import *
+from .layers import fully_connected, input_data
+from .model import Model

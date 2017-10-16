@@ -15,18 +15,23 @@ def foo():
         [1, 0], [0, 1], [0, 1], [1, 0],
     ], dtype=float)
 
-    inp = input_data((None, 2))
-    fc1 = fully_connected(inp, 4, activation='sigmoid')
-    fc2 = fully_connected(fc1, 3, activation='sigmoid')
-    fc3 = fully_connected(fc2, 2, activation='sigmoid')
+    net = input_data((None, 2))
+    net = fully_connected(net, 3, activation='sigmoid')
+    net = fully_connected(net, 2, activation='sigmoid')
 
-    dnn = Model(fc3)
-    dnn.fit(x, y, n_epoch=15000)
+    model = Model(net)
+    model.fit(x, y, n_epoch=5000)
+    model.save('model.json')
+    model.load('model.json')
 
-    # print(dnn.predict(x))
+    model.show('tab')
+
+    # print(model.predict(x))
     for i in x:
-        print(dnn.predict(i))
+        print(model.predict(i))
     print(y)
+
+    model.plot_error()
 
 
 def vector2onehot(vector: np.ndarray):
@@ -95,5 +100,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
-    # foo()
+    # main()
+    foo()

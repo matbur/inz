@@ -16,11 +16,11 @@ def foo():
     ], dtype=float)
 
     net = input_data((None, 2))
-    net = fully_connected(net, 3, activation='sigmoid')
-    net = fully_connected(net, 2, activation='sigmoid')
+    net = fully_connected(net, 3, activation='tanh')
+    net = fully_connected(net, 2, activation='tanh')
 
     model = Model(net)
-    model.fit(x, y, n_epoch=5000)
+    model.fit(x, y, n_epoch=200)
     model.save('model.json')
     model.load('model.json')
 
@@ -64,7 +64,7 @@ def get_accuracy(pred, y):
 def main():
     np.random.seed(42)
 
-    data = get_data(4)
+    data = get_data(10)
 
     train, test = train_test_split(data)
     print(train.shape, test.shape)
@@ -84,21 +84,22 @@ def main():
 
     model_file = 'model.json'
     model = Model(net)
-    # model.fit(x_train, y_train,
-    #           n_epoch=100,
-    #           batch_size=10,
-    #           )
-    # model.save(model_file)
+    model.fit(x_train, y_train,
+              validation_set=(x_test, y_test),
+              n_epoch=30,
+              batch_size=10,
+              )
+    model.save(model_file)
     model.load(model_file)
 
-    for i, j in zip(model.predict(x_test), y_test):
-        print(np.argmax(i), np.argmax(j))
+    # for i, j in zip(model.predict(x_test), y_test):
+    #     print(np.argmax(i), np.argmax(j))
 
     print(get_accuracy(model.predict(x_test), y_test))
 
-    # model.plot_error()
+    model.plot_error()
 
 
 if __name__ == '__main__':
-    # main()
-    foo()
+    main()
+    # foo()

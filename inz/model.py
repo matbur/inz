@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from time import time
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,6 +22,11 @@ def loss(a, b) -> np.ndarray:
     return np.sum((a - b) ** 2) / 2
 
 
+def get_accuracy(pred, y):
+    axis_ = np.argmax(pred, axis=1) - np.argmax(y, axis=1)
+    return 1 - np.count_nonzero(axis_) / len(y)
+
+
 class Model:
     def __init__(self, network: Layer):
         self.network = network
@@ -33,7 +39,8 @@ class Model:
         self._learn_coef = .2
         self.errors = []
 
-    def fit(self, X_inputs: np.ndarray, Y_targets: np.ndarray, n_epoch=10, batch_size=64, shuffle=False):
+    def fit(self, X_inputs: np.ndarray, Y_targets: np.ndarray, validation_set: Tuple[np.ndarray, np.ndarray] = None,
+            n_epoch=10, batch_size=64, shuffle=False):
 
         xlen = len(X_inputs)
         step = 0
@@ -43,6 +50,7 @@ class Model:
             batches_x = split(X_inputs[p], batch_size)
             batches_y = split(Y_targets[p], batch_size)
             err = []
+            num, den = 0, 0
             for i, (batch_x, batch_y) in enumerate(zip(batches_x, batches_y)):
                 step += 1
                 t0 = time()
@@ -52,12 +60,22 @@ class Model:
                     self.network.calc_gradient()
                     self.network.update_weights()
 
-                e = loss(self.predict(batch_x), batch_y)
+                predict = self.predict(batch_x)
+                e = loss(predict, batch_y)
                 err.append(e)
+
+                l = len(batch_x)
+                num += l - np.count_nonzero(predict.argmax(axis=1) - batch_y.argmax(axis=1))
+                den += l
+
                 t = time() - t0
                 print(f'Training Step: {step} | total loss: {e} | time: {t}s')
-                print(f'epoch: {epoch} | acc: 0.5191 -- iter: {i * batch_size}/{xlen}')
+                print(f'epoch: {epoch} | acc: {num/den} -- iter: {i * batch_size}/{xlen}')
 
+            test_predict = self.predict(validation_set[0])
+            test_acc = get_accuracy(test_predict, validation_set[1])
+
+            print(f'Validation accuracy: {test_acc}')
             mean = np.mean(err)
             self.errors.append(mean)
             # logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))

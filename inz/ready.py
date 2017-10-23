@@ -7,6 +7,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from tflearn import DNN, fully_connected, input_data, regression
 
+from inz.utils import vector2onehot
+
 
 def use_sklearn(x_train, y_train, x_test, y_test):
     model = MLPClassifier()
@@ -39,14 +41,6 @@ def use_tflearn(x_train, y_train, x_test, y_test):
               run_id='DNN-4f')
     model.save(MODEL_FILE.as_posix())
     return model
-
-
-def vector2onehot(vector: np.ndarray):
-    unique = len(set(vector))
-    length = len(vector)
-    data = np.zeros((length, unique))
-    data[range(length), vector] = 1
-    return data
 
 
 def get_data(num_features=20):

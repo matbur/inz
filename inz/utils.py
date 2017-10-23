@@ -75,3 +75,20 @@ def iter_layers(network: Layer, attr, with_values=True, i=0):
     if with_values:
         print(values)
     iter_layers(previous, attr, with_values, i + 1)
+
+
+def get_loss(pred, y) -> np.ndarray:
+    return np.sum((pred - y) ** 2) / 2
+
+
+def get_accuracy(pred, y):
+    axis_ = np.argmax(pred, axis=1) - np.argmax(y, axis=1)
+    return 1 - np.count_nonzero(axis_) / len(y)
+
+
+def vector2onehot(vector: np.ndarray):
+    unique = len(set(vector))
+    length = len(vector)
+    data = np.zeros((length, unique))
+    data[range(length), vector] = 1
+    return data

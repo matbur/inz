@@ -9,22 +9,13 @@ import numpy as np
 from .layers import Layer
 from .logger import create_logger
 from .schemas import NetworkSchema
-from .utils import iter_layers, split
+from .utils import get_accuracy, get_loss, iter_layers, split
 
 logger = create_logger(
     __name__,
     con_level='DEBUG',
     filename=Path(__file__).with_suffix('.log')
 )
-
-
-def loss(a, b) -> np.ndarray:
-    return np.sum((a - b) ** 2) / 2
-
-
-def get_accuracy(pred, y):
-    axis_ = np.argmax(pred, axis=1) - np.argmax(y, axis=1)
-    return 1 - np.count_nonzero(axis_) / len(y)
 
 
 class Model:
@@ -36,15 +27,14 @@ class Model:
             layer = layer.previous
         self.input = layer
 
-        self._learn_coef = .2
         self.errors = []
 
     def fit(self, X_inputs: np.ndarray, Y_targets: np.ndarray, validation_set: Tuple[np.ndarray, np.ndarray] = None,
             n_epoch=10, batch_size=64, shuffle=False):
 
         xlen = len(X_inputs)
-        step = 0
-        for epoch in range(n_epoch):
+        step = 1
+        for epoch in range(1, n_epoch + 1):
             # p = np.random.permutation(xlen)
             p = np.arange(xlen)
             batches_x = split(X_inputs[p], batch_size)
@@ -61,7 +51,7 @@ class Model:
                     self.network.update_weights()
 
                 predict = self.predict(batch_x)
-                e = loss(predict, batch_y)
+                e = get_loss(predict, batch_y)
                 err.append(e)
 
                 l = len(batch_x)
@@ -69,16 +59,19 @@ class Model:
                 den += l
 
                 t = time() - t0
-                print(f'Training Step: {step} | total loss: {e} | time: {t}s')
-                print(f'epoch: {epoch} | acc: {num/den} -- iter: {i * batch_size}/{xlen}')
+                print(f'Training Step: {step:<4} | total loss: {e:.5f} | time: {t:.3f}s')
+                print(f'         epoch: {epoch:0>3} | acc: {num/den:.4f} -- iter: {i * batch_size:0>3}/{xlen}')
 
             test_predict = self.predict(validation_set[0])
-            test_acc = get_accuracy(test_predict, validation_set[1])
+            test_y = validation_set[1]
+            test_acc = get_accuracy(test_predict, test_y)
+            test_loss = get_loss(test_predict, test_y)
 
-            print(f'Validation accuracy: {test_acc}')
+            print('--')
+            print(f'End of epoch: {epoch:0>3}   | val_loss: {test_loss:.5f} | val_acc: {test_acc:.4f}')
+            print('--')
             mean = np.mean(err)
             self.errors.append(mean)
-            # logger.info('epoch: {}| error: {:.6f}'.format(epoch, mean))
 
     def get_weights(self) -> NetworkSchema:
         data = []

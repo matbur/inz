@@ -4,9 +4,10 @@ from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.model_selection import train_test_split
 
 from inz import Model, fully_connected, input_data
+from inz.utils import vector2onehot
 
 
-def foo():
+def xor_problem():
     np.random.seed(1)
     x = np.array([
         [1, 1], [1, 0], [0, 1], [0, 0],
@@ -32,14 +33,6 @@ def foo():
     print(y)
 
     model.plot_error()
-
-
-def vector2onehot(vector: np.ndarray):
-    unique = len(set(vector))
-    length = len(vector)
-    data = np.zeros((length, unique))
-    data[range(length), vector] = 1
-    return data
 
 
 def get_data(num_features=20):
@@ -102,4 +95,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # foo()
+    # xor_problem()

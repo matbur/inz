@@ -1,7 +1,9 @@
 import numpy as np
+import pandas as pd
 import pytest
+from sklearn.feature_selection import SelectKBest, chi2 as sk_chi2
 
-from inz.utils import split
+from inz.utils import chi2, select_k_best, split
 
 
 def test_split_list_int():
@@ -105,6 +107,34 @@ def test_split_generator_str_not_allow():
     get = list(split(strings, 2, False))
     assert len(get) == len(want)
     assert get == want
+
+
+@pytest.fixture
+def data():
+    X = pd.read_csv('../../data/data.csv')
+    y = X.pop('Choroba')
+    return X.values, y.values
+
+
+def test_chi2(data):
+    X, y = data
+    sk_val, _ = sk_chi2(X, y)
+    my_val = chi2(X, y)
+
+    np.testing.assert_equal(sk_val, my_val)
+
+
+def test_select_k_best(data):
+    X, y = data
+    for i in range(1, 31):
+        sk_sup1 = SelectKBest(sk_chi2, i).fit(X, y).get_support()
+        sk_sup2 = SelectKBest(sk_chi2, i).fit(X, y).get_support(True)
+
+        my_sup1 = select_k_best(X, y, k=i)
+        my_sup2 = select_k_best(X, y, k=i, indices=True)
+
+        np.testing.assert_equal(sk_sup1, my_sup1, str(i))
+        np.testing.assert_equal(sk_sup2, sorted(my_sup2), str(i))
 
 
 if __name__ == '__main__':

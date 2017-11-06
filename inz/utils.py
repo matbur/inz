@@ -92,3 +92,32 @@ def vector2onehot(vector: np.ndarray):
     data = np.zeros((length, unique))
     data[range(length), vector] = 1
     return data
+
+
+def chi2(X: np.ndarray, y: np.ndarray):
+    """https://pl.wikipedia.org/wiki/Test_zgodno%C5%9Bci_chi-kwadrat#Zliczenia"""
+
+    Y = vector2onehot(y - 1)
+    observed = Y.T @ X  # n_classes * n_features
+
+    feature_count = X.sum(axis=0).reshape(1, -1)
+    class_prob = Y.mean(axis=0).reshape(1, -1)
+    expected = class_prob.T @ feature_count
+
+    # Reuse observed for chi-squared statistics
+    chisq = observed
+    chisq -= expected
+    chisq **= 2
+    chisq /= expected
+    chisq = chisq.sum(axis=0)
+    return chisq
+
+
+def select_k_best(X, y, func=chi2, k=10, indices=False):
+    scores = func(X, y)
+    mask = np.zeros_like(scores, dtype=bool)
+    args = np.argsort(scores)[-k:]
+    if indices:
+        return args
+    mask[args] = 1
+    return mask

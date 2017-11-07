@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from sklearn.feature_selection import SelectKBest, chi2 as sk_chi2
 
-from inz.utils import chi2, select_k_best, split
+from inz.utils import chi2, select_k_best, split, train_test_split
 
 
 def test_split_list_int():
@@ -135,6 +135,22 @@ def test_select_k_best(data):
 
         np.testing.assert_equal(sk_sup1, my_sup1, str(i))
         np.testing.assert_equal(sk_sup2, sorted(my_sup2), str(i))
+
+
+def test_train_test_split():
+    x = np.arange(10)
+    get = train_test_split(x, shuffle=False)
+    want = [np.arange(7), np.arange(7, 10)]
+    for i in zip(get, want):
+        np.testing.assert_equal(*i)
+
+
+def test_train_test_split5():
+    x = np.arange(10)
+    get = train_test_split(x, test_size=.5, shuffle=False)
+    want = [np.arange(5), np.arange(5, 10)]
+    for i in zip(get, want):
+        np.testing.assert_equal(*i)
 
 
 if __name__ == '__main__':

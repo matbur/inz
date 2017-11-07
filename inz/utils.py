@@ -121,3 +121,16 @@ def select_k_best(X, y, func=chi2, k=10, indices=False):
         return args
     mask[args] = 1
     return mask
+
+
+def train_test_split(*arrays, test_size=.25, shuffle=True):
+    n = len(arrays[0])
+    order = np.random.permutation(n) if shuffle else np.arange(n)
+    k = int(np.ceil(n * test_size))
+    order_train = order[:-k]
+    order_test = order[-k:]
+    l = []
+    for i in arrays:
+        l.append(i[order_train])
+        l.append(i[order_test])
+    return l

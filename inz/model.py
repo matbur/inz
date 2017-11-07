@@ -38,6 +38,10 @@ class Model:
         xlen = len(X_inputs)
         step = 0
         order = np.random.permutation(xlen) if shuffle else np.arange(xlen)
+
+        if validation_set is None:
+            validation_set = X_inputs, Y_targets
+
         training = []
         testing = []
         for epoch in range(1, n_epoch + 1):
@@ -111,6 +115,12 @@ class Model:
                     x += 1
 
             return f()
+
+    def _apply_lr(self, lr):
+        layer = self.network
+        while layer.previous is not None:
+            layer.learning_rate = lr
+            layer = layer.previous
 
     def get_weights(self) -> NetworkSchema:
         data = []

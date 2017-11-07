@@ -21,15 +21,11 @@ def xor_problem():
 
     model = Model(net)
     model.fit(x, y, n_epoch=200)
-    model.save('model.json')
-    model.load('model.json')
+    model.save('xor_model.json')
+    model.load('xor_model.json')
 
-    model.show('tab')
-
-    # print(model.predict(x))
-    for i in x:
-        print(model.predict(i))
-    print(y)
+    for i in zip(y, model.predict(x)):
+        print(*i)
 
     model.plot_error()
 

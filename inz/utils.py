@@ -101,16 +101,11 @@ def chi2(X: np.ndarray, y: np.ndarray):
     observed = Y.T @ X  # n_classes * n_features
 
     feature_count = X.sum(axis=0).reshape(1, -1)
-    class_prob = Y.mean(axis=0).reshape(1, -1)
-    expected = class_prob.T @ feature_count
+    class_prob = Y.mean(axis=0).reshape(-1, 1)
+    expected = class_prob @ feature_count
 
-    # Reuse observed for chi-squared statistics
-    chisq = observed
-    chisq -= expected
-    chisq **= 2
-    chisq /= expected
-    chisq = chisq.sum(axis=0)
-    return chisq
+    val = (observed - expected) ** 2 / expected
+    return val.sum(axis=0)
 
 
 def select_k_best(X, y, func=chi2, k=10, indices=False):

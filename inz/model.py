@@ -2,7 +2,7 @@ import json
 from itertools import repeat
 from pathlib import Path
 from time import time
-from typing import Tuple
+from typing import Iterator, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +14,8 @@ from .utils import get_accuracy, get_loss, iter_layers, split
 
 logger = create_logger(
     __name__,
-    con_level='DEBUG',
+    con_level='INFO',
+    file_level='INFO',
     filename=Path(__file__).with_suffix('.log')
 )
 
@@ -32,7 +33,7 @@ class Model:
 
     def fit(self, X_inputs: np.ndarray, Y_targets: np.ndarray,
             validation_set: Tuple[np.ndarray, np.ndarray] = None,
-            learning_rate=None, n_epoch=10, batch_size=64,
+            learning_rate=.2, n_epoch=10, batch_size=64,
             shuffle=False, train_file='train.json'):
 
         xlen = len(X_inputs)
@@ -42,6 +43,8 @@ class Model:
         if validation_set is None:
             validation_set = X_inputs, Y_targets
 
+        lr_iter = self._parse_learning_rate(learning_rate, n_epoch)
+
         training = []
         testing = []
         for epoch in range(1, n_epoch + 1):
@@ -49,6 +52,7 @@ class Model:
             batches_y = split(Y_targets[order], batch_size)
             err = []
             num, den = 0, 0
+            lr = next(lr_iter)
             for i, (batch_x, batch_y) in enumerate(zip(batches_x, batches_y)):
                 step += 1
                 t0 = time()
@@ -56,7 +60,7 @@ class Model:
                     self.input.feedforward(x)
                     self.network.calc_delta(y)
                     self.network.calc_gradient()
-                    self.network.update_weights()
+                    self.network.update_weights(lr)
 
                 predict = self.predict(batch_x)
                 e = get_loss(predict, batch_y)
@@ -70,7 +74,7 @@ class Model:
 
                 t = time() - t0
                 print(f'Training Step: {step:<4} | total loss: {e:.5f} | time: {t:.3f}s')
-                print(f'         epoch: {epoch:0>3} | acc: {acc:.4f} -- iter: {iteration:0>3}/{xlen}')
+                print(f'lr: {lr:.3f} |epoch: {epoch:0>3} | acc: {acc:.4f} -- iter: {iteration:0>3}/{xlen}')
                 training.append({
                     'step': step,
                     'total_loss': e,
@@ -100,21 +104,13 @@ class Model:
         Path(train_file).write_text(data)
 
     @staticmethod
-    def _parse_learning_rate(lr, n_epoch=None):
+    def _parse_learning_rate(lr: Union[float, list, tuple], n_epoch=None) -> Iterator:
         if isinstance(lr, float):
             return repeat(lr)
         if isinstance(lr, (list, tuple)):
-            assert n_epoch
-
-            lr1, lr2 = lr
-
-            def f():
-                x = 0
-                while 1:
-                    yield x * (lr2 - lr1) / (n_epoch - 1) + lr1
-                    x += 1
-
-            return f()
+            assert len(lr) == 2
+            return iter(np.linspace(*lr, n_epoch))
+        raise TypeError('LR should be float, tuple or list')
 
     def _apply_lr(self, lr):
         layer = self.network

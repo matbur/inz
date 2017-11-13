@@ -1,9 +1,8 @@
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from inz import Model, fully_connected, input_data
-from inz.utils import select_k_best, vector2onehot
+from inz.utils import get_data, vector2onehot
 
 
 def xor_problem():
@@ -28,19 +27,6 @@ def xor_problem():
         print(*i)
 
     model.plot_error()
-
-
-def get_data(num_features=20):
-    X = pd.read_csv('./data/data.csv')
-    y = X.pop('Choroba')
-
-    sup = select_k_best(X, y, k=num_features)
-
-    X = X.drop(X.columns[~sup], axis=1)
-
-    X['Choroba'] = y
-
-    return X.values
 
 
 def get_accuracy(pred, y):
@@ -73,8 +59,9 @@ def main():
     model = Model(net)
     model.fit(x_train, y_train,
               validation_set=(x_test, y_test),
-              n_epoch=30,
+              n_epoch=10,
               batch_size=10,
+              learning_rate=.2,
               )
     model.save(model_file)
     model.load(model_file)

@@ -19,7 +19,6 @@ class Layer:
     id = 0
 
     def __init__(self, shape, activation='sigmoid'):
-        self.learning_rate = .2
         self.shape = shape
         self.n_inputs = shape[0]
         self.n_outputs = shape[1]
@@ -112,13 +111,13 @@ class Layer:
 
         self.previous.calc_gradient()
 
-    def update_weights(self):
+    def update_weights(self, learning_rate=.2):
         if self.is_first:
             return
 
-        self.tab -= self.gradient * self.learning_rate
+        self.tab -= self.gradient * learning_rate
 
-        self.previous.update_weights()
+        self.previous.update_weights(learning_rate)
 
     def load(self, tabs: NetworkSchema):
         if self.is_first:
@@ -154,13 +153,3 @@ def fully_connected(incoming: Layer, n_units: int, activation='relu') -> Layer:
 
 def dropout(incoming: Layer, keep_prob=.8) -> Layer:
     pass
-
-
-def regression(incoming, optimizer='adam'):
-    def loss(a, b) -> np.ndarray:
-        return np.sum((a - b) ** 2) / 2
-
-    shape = (None, None)
-    layer = Layer(shape)
-    layer.previous = incoming
-    return layer

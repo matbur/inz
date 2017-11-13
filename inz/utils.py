@@ -1,9 +1,9 @@
 """ Module contains common functions used in project. """
-
 from itertools import islice
 from typing import Iterable
 
 import numpy as np
+import pandas as pd
 
 from .layers import Layer
 
@@ -129,3 +129,16 @@ def train_test_split(*arrays, test_size=.25, shuffle=True):
         l.append(i[order_train])
         l.append(i[order_test])
     return l
+
+
+def get_data(num_features=20):
+    X = pd.read_csv('./data/data.csv')
+    y = X.pop('Choroba')
+
+    sup = select_k_best(X.values, y.values, k=num_features)
+
+    X = X.drop(X.columns[~sup], axis=1)
+
+    X['Choroba'] = y
+
+    return X.values

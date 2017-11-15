@@ -1,10 +1,9 @@
 from pathlib import Path
 
 import numpy as np
-from sklearn.model_selection import train_test_split
 
 from inz import Model, fully_connected, input_data
-from inz.utils import get_data, vector2onehot
+from inz.utils import get_data, train_test_split, vector2onehot
 
 
 def xor_problem():

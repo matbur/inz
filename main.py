@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 from sklearn.model_selection import train_test_split
 
@@ -34,10 +36,20 @@ def get_accuracy(pred, y):
     return 1 - np.count_nonzero(axis_) / len(y)
 
 
-def main():
-    np.random.seed(42)
+def create_network(n, shapes, activation):
+    net = input_data(shape=(None, n))
+    for i in shapes:
+        net = fully_connected(net, i, activation)
+    return net
 
-    data = get_data(20)
+
+def test_case(shapes, activation, n_features, batch_size, learning_rate):
+    name = 's_{}_a_{}_f_{}_bs_{}_lr_{}'.format(
+        '_'.join(map(str, shapes)), activation, n_features, batch_size, '_'.join(map(str, learning_rate))
+    )
+    network = create_network(n_features, shapes, activation)
+
+    data = get_data(n_features)
 
     train, test = train_test_split(data)
     print(train.shape, test.shape)
@@ -49,22 +61,16 @@ def main():
     y_test = test[:, -1] - 1
     y_test = vector2onehot(y_test)
 
-    net = input_data(shape=(None, x_train.shape[1]))
-    net = fully_connected(net, 24, activation='sigmoid')
-    net = fully_connected(net, 16, activation='sigmoid')
-    net = fully_connected(net, 12, activation='sigmoid')
-    net = fully_connected(net, 8, activation='sigmoid')
-
-    model_file = 'model.json'
-    model = Model(net)
+    model = Model(network)
     model.fit(x_train, y_train,
               validation_set=(x_test, y_test),
-              n_epoch=10,
-              batch_size=10,
-              learning_rate=.2,
+              n_epoch=100,
+              batch_size=batch_size,
+              learning_rate=learning_rate,
+              train_file=f'tests/{name}_train.json',
               )
-    model.save(model_file)
-    model.load(model_file)
+    model.save(f'tests/{name}_model.json')
+    model.load(f'tests/{name}_model.json')
 
     # for i, j in zip(model.predict(x_test), y_test):
     #     print(np.argmax(i), np.argmax(j))
@@ -72,6 +78,31 @@ def main():
     print(get_accuracy(model.predict(x_test), y_test))
 
     # model.plot_error()
+
+
+def test_all():
+    Path('tests').mkdir(exist_ok=True)
+    cases = []
+    for act in ('tanh', 'sigmoid'):
+        for feat in (10, 20):
+            for size in (10, 80):
+                for lr in ([.2, .2], [.2, .01]):
+                    cases.append({
+                        'shapes': [24, 16, 12, 8],
+                        'activation': act,
+                        'n_features': feat,
+                        'batch_size': size,
+                        'learning_rate': lr,
+                    })
+    for case in cases:
+        print(case)
+        test_case(**case)
+
+
+def main():
+    np.random.seed(42)
+
+    test_all()
 
 
 if __name__ == '__main__':

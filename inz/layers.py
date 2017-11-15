@@ -28,7 +28,7 @@ class Layer:
 
         self.tab: np.ndarray = None
         if shape[0] is not None:
-            self.tab = np.random.rand(shape[0] + 1, shape[1]) - .5
+            self.tab = np.random.rand(shape[0] + 1, shape[1])
             # self.tab = next(weights)
 
         self.previous: Layer = None

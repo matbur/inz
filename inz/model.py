@@ -83,6 +83,7 @@ class Model:
                     'accuracy': acc,
                     'iteration': iteration,
                     'len': xlen,
+                    'lr': lr,
                 })
 
             test_predict = self.predict(validation_set[0])

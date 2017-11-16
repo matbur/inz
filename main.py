@@ -35,22 +35,24 @@ def get_accuracy(pred, y):
     return 1 - np.count_nonzero(axis_) / len(y)
 
 
-def create_network(n, shapes, activation):
+def create_network(n, shapes, activation, seed=42):
+    np.random.seed(seed)
+
     net = input_data(shape=(None, n))
     for i in shapes:
         net = fully_connected(net, i, activation)
     return net
 
 
-def test_case(shapes, activation, n_features, batch_size, learning_rate):
+def test_case(shapes, activation, n_features, batch_size, learning_rate, seed=42):
     name = 's_{}_a_{}_f_{}_bs_{}_lr_{}'.format(
         '_'.join(map(str, shapes)), activation, n_features, batch_size, '_'.join(map(str, learning_rate))
     )
-    network = create_network(n_features, shapes, activation)
+    network = create_network(n_features, shapes, activation, seed=seed)
 
     data = get_data(n_features)
 
-    train, test = train_test_split(data)
+    train, test = train_test_split(data, seed=seed)
     print(train.shape, test.shape)
 
     x_train = train[:, :-1]
@@ -82,7 +84,7 @@ def test_case(shapes, activation, n_features, batch_size, learning_rate):
 def test_all():
     Path('tests').mkdir(exist_ok=True)
     cases = []
-    for act in ('tanh', 'sigmoid'):
+    for act in ('sigmoid', 'tanh'):
         for feat in (10, 20):
             for size in (10, 80):
                 for lr in ([.2, .2], [.2, .01]):

@@ -1,6 +1,6 @@
 """ Module contains common functions used in project. """
 from itertools import islice
-from typing import Iterable
+from typing import Iterable, Union
 
 import numpy as np
 import pandas as pd
@@ -118,7 +118,10 @@ def select_k_best(X, y, func=chi2, k=10, indices=False):
     return mask
 
 
-def train_test_split(*arrays, test_size=.25, shuffle=True):
+def train_test_split(*arrays, test_size=.25, shuffle=True, seed: Union[int] = None):
+    if seed is not None:
+        np.random.seed(seed)
+
     n = len(arrays[0])
     order = np.random.permutation(n) if shuffle else np.arange(n)
     k = int(np.ceil(n * test_size))

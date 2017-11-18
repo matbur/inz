@@ -86,13 +86,13 @@ def test_all():
     cases = []
     for act in ('sigmoid', 'tanh'):
         for feat in (10, 20):
-            for size in (10, 80):
-                for lr in ([.2, .2], [.2, .01]):
+            for shape in ([24, 16, 12, 8], [16, 12, 8], [16, 8]):
+                for lr in ([.2, .2], [.2, .01], [.1, .1], [.1, .01]):
                     cases.append({
-                        'shapes': [24, 16, 12, 8],
+                        'shapes': shape,
                         'activation': act,
                         'n_features': feat,
-                        'batch_size': size,
+                        'batch_size': 10,
                         'learning_rate': lr,
                     })
     for case in cases:

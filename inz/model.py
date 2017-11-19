@@ -73,8 +73,8 @@ class Model:
                 iteration = i * batch_size
 
                 t = time() - t0
-                print(f'Training Step: {step:<4} | total loss: {e:.5f} | time: {t:.3f}s')
-                print(f'lr: {lr:.3f} |epoch: {epoch:0>3} | acc: {acc:.4f} -- iter: {iteration:0>3}/{xlen}')
+                logger.debug(f'Training Step: {step:<4} | total loss: {e:.5f} | time: {t:.3f}s')
+                logger.debug(f'lr: {lr:.3f} |epoch: {epoch:0>3} | acc: {acc:.4f} -- iter: {iteration:0>3}/{xlen}')
                 training.append({
                     'step': step,
                     'total_loss': e,
@@ -91,9 +91,9 @@ class Model:
             test_acc = get_accuracy(test_predict, test_y)
             test_loss = get_loss(test_predict, test_y)
 
-            print('--')
-            print(f'End of epoch: {epoch:0>3}   | val_loss: {test_loss:.5f} | val_acc: {test_acc:.4f}')
-            print('--')
+            logger.debug('--')
+            logger.info(f'End of epoch: {epoch:0>3}   | val_loss: {test_loss:.5f} | val_acc: {test_acc:.4f}')
+            logger.debug('--')
             testing.append({
                 'test_loss': test_loss,
                 'epoch': epoch,

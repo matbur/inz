@@ -1,3 +1,5 @@
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
 from pathlib import Path
 
 import numpy as np
@@ -48,12 +50,12 @@ def test_case(shapes, activation, n_features, batch_size, learning_rate, seed=42
     name = 's_{}_a_{}_f_{}_bs_{}_lr_{}'.format(
         '_'.join(map(str, shapes)), activation, n_features, batch_size, '_'.join(map(str, learning_rate))
     )
+    print(name)
     network = create_network(n_features, shapes, activation, seed=seed)
 
     data = get_data(n_features)
 
     train, test = train_test_split(data, seed=seed)
-    print(train.shape, test.shape)
 
     x_train = train[:, :-1]
     y_train = train[:, -1] - 1
@@ -81,29 +83,35 @@ def test_case(shapes, activation, n_features, batch_size, learning_rate, seed=42
     # model.plot_error()
 
 
-def test_all():
+def wrapper(x):
+    return test_case(**x)
+
+
+def prepare_test_cases():
     Path('tests').mkdir(exist_ok=True)
-    cases = []
     for act in ('sigmoid', 'tanh'):
         for feat in (10, 20):
-            for shape in ([24, 16, 12, 8], [16, 12, 8], [16, 8]):
+            for shape in ([24, 16, 12, 8], [16, 12, 8], [16, 8], [8]):
                 for lr in ([.2, .2], [.2, .01], [.1, .1], [.1, .01]):
-                    cases.append({
+                    yield {
                         'shapes': shape,
                         'activation': act,
                         'n_features': feat,
                         'batch_size': 10,
                         'learning_rate': lr,
-                    })
-    for case in cases:
-        print(case)
-        test_case(**case)
+                    }
 
 
 def main():
     np.random.seed(42)
 
-    test_all()
+    cpus = min(cpu_count(), 16)
+    cases = prepare_test_cases()
+
+    print(f'Running on {cpus} CPUs')
+
+    with Pool(cpus) as pool:
+        pool.map(wrapper, cases)
 
 
 if __name__ == '__main__':

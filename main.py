@@ -1,3 +1,4 @@
+from datetime import datetime
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from pathlib import Path
@@ -46,7 +47,7 @@ def create_network(n, shapes, activation, seed=42):
     return net
 
 
-def test_case(shapes, activation, n_features, batch_size, learning_rate, seed=42):
+def test_case(shapes, activation, n_features, batch_size, learning_rate, n_epoch, model_dir, seed=42):
     name = 's_{}_a_{}_f_{}_bs_{}_lr_{}'.format(
         '_'.join(map(str, shapes)), activation, n_features, batch_size, '_'.join(map(str, learning_rate))
     )
@@ -67,13 +68,15 @@ def test_case(shapes, activation, n_features, batch_size, learning_rate, seed=42
     model = Model(network)
     model.fit(x_train, y_train,
               validation_set=(x_test, y_test),
-              n_epoch=100,
+              n_epoch=n_epoch,
               batch_size=batch_size,
               learning_rate=learning_rate,
-              train_file=f'tests/{name}_train.json',
+              train_file=f'{model_dir}/{name}_train.json',
               )
-    model.save(f'tests/{name}_model.json')
-    model.load(f'tests/{name}_model.json')
+
+    model_fn = f'{model_dir}/{name}_model.json'
+    model.save(model_fn)
+    # model.load(model_fn)
 
     # for i, j in zip(model.predict(x_test), y_test):
     #     print(np.argmax(i), np.argmax(j))
@@ -88,9 +91,10 @@ def wrapper(x):
 
 
 def prepare_test_cases():
-    Path('tests').mkdir(exist_ok=True)
+    model_dir = datetime.now().strftime('%s')
+    Path(model_dir).mkdir(exist_ok=True)
     for act in ('sigmoid', 'tanh'):
-        for feat in (10, 20):
+        for feat in (10, 20, 30):
             for shape in ([24, 16, 12, 8], [16, 12, 8], [16, 8], [8]):
                 for lr in ([.2, .2], [.2, .01], [.1, .1], [.1, .01]):
                     yield {
@@ -99,6 +103,8 @@ def prepare_test_cases():
                         'n_features': feat,
                         'batch_size': 10,
                         'learning_rate': lr,
+                        'n_epoch': 200,
+                        'model_dir': model_dir,
                     }
 
 

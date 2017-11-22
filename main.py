@@ -96,14 +96,14 @@ def prepare_test_cases():
     for act in ('sigmoid', 'tanh'):
         for feat in (10, 20, 30):
             for shape in ([24, 16, 12, 8], [16, 12, 8], [16, 8], [8]):
-                for lr in ([.2, .2], [.2, .01], [.1, .1], [.1, .01]):
+                for lr in ([.2, .2], [.2, .01], [.1, .1], [.1, .01], [.2, .001]):
                     yield {
                         'shapes': shape,
                         'activation': act,
                         'n_features': feat,
                         'batch_size': 10,
                         'learning_rate': lr,
-                        'n_epoch': 200,
+                        'n_epoch': 400,
                         'model_dir': model_dir,
                     }
 

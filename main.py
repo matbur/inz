@@ -108,7 +108,7 @@ def prepare_test_cases():
                     }
 
 
-def main():
+def run_all():
     np.random.seed(42)
 
     cpus = min(cpu_count(), 16)
@@ -124,7 +124,7 @@ if __name__ == '__main__':
     from time import time
 
     t0 = time()
-    main()
+    run_all()
     # xor_problem()
     t = time() - t0
     print(f'Done in {t} s')

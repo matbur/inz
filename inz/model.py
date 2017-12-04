@@ -142,7 +142,7 @@ class Model:
     def predict(self, x: np.ndarray) -> np.ndarray:
         return self.input.feedforward(x)
 
-    def predict_label(self, x: np.ndarray):
+    def predict_label(self, x: np.ndarray) -> int:
         pass
 
     def set_weights(self, tensor: NetworkSchema):
